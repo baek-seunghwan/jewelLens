@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -35,17 +36,34 @@ export function HeroSlider() {
     },
   ];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+  const [progress, setProgress] = useState(0);
 
-    return () => clearInterval(timer);
-  }, [slides.length]);
-
-  const goToSlide = (index: number) => {
+  const goToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
-  };
+    setProgress(0);
+  }, []);
+
+  const goToNext = useCallback(() => {
+    goToSlide((currentSlide + 1) % slides.length);
+  }, [currentSlide, slides.length, goToSlide]);
+
+  const goToPrev = useCallback(() => {
+    goToSlide((currentSlide - 1 + slides.length) % slides.length);
+  }, [currentSlide, slides.length, goToSlide]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          goToNext();
+          return 0;
+        }
+        return prev + 2;
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [goToNext]);
 
   return (
     <section className="relative w-full h-[80vh] overflow-hidden">
@@ -105,16 +123,56 @@ export function HeroSlider() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-        {slides.map((_, index) => (
+      {/* Arrow Navigation */}
+      <button
+        onClick={goToPrev}
+        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all hover:scale-110"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      <button
+        onClick={goToNext}
+        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all hover:scale-110"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
+
+      {/* Navigation Dots + Progress */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
+        {slides.map((slide, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`slider-dot ${index === currentSlide ? "active" : ""}`}
+            className="relative group flex items-center"
             aria-label={`Go to slide ${index + 1}`}
-          />
+          >
+            <div className={`relative h-1 rounded-full overflow-hidden transition-all duration-300 ${
+              index === currentSlide ? 'w-12 bg-white/30' : 'w-6 bg-white/20 hover:bg-white/30'
+            }`}>
+              {index === currentSlide && (
+                <div
+                  className="absolute inset-y-0 left-0 bg-white rounded-full"
+                  style={{ width: `${progress}%` }}
+                />
+              )}
+              {index !== currentSlide && (
+                <div className="absolute inset-0 bg-white/40 rounded-full" />
+              )}
+            </div>
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs text-white/0 group-hover:text-white/80 transition-all whitespace-nowrap">
+              {slide.title}
+            </span>
+          </button>
         ))}
+      </div>
+
+      {/* Slide Counter */}
+      <div className="absolute bottom-8 right-8 z-20 text-white/60 text-sm font-mono">
+        <span className="text-white">{String(currentSlide + 1).padStart(2, '0')}</span>
+        <span className="mx-1">/</span>
+        <span>{String(slides.length).padStart(2, '0')}</span>
       </div>
     </section>
   );

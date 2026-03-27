@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Eye, BadgeCheck, Sparkles } from "lucide-react";
+import { Eye, BadgeCheck, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { ProductModal } from "./ProductModal";
+import { Link } from "react-router-dom";
 
 export function FeaturedProducts() {
   const [selectedProduct, setSelectedProduct] = useState<typeof featuredProducts[0] | null>(null);
@@ -179,6 +180,25 @@ export function FeaturedProducts() {
         open={modalOpen}
         onOpenChange={setModalOpen}
       />
+
+      {/* CTA to Marketplace */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="container mx-auto px-4 relative z-10 mt-12 text-center"
+      >
+        <Link to="/marketplace">
+          <Button
+            variant="outline"
+            size="lg"
+            className="group border-purple-500/30 hover:border-purple-500/60 text-purple-600 hover:bg-purple-500/5"
+          >
+            마켓플레이스에서 더 많은 상품 보기
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
+      </motion.div>
     </section>
   );
 }
